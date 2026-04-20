@@ -57,6 +57,21 @@
             border-color: #667eea;
         }
 
+        #prioritySelect {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        #prioritySelect:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
         #addBtn {
             padding: 12px 30px;
             background: #667eea;
@@ -107,6 +122,42 @@
             color: #999;
         }
 
+        .task-item.urgent {
+            border-left-color: #ff3333;
+        }
+
+        .task-item.important {
+            border-left-color: #ffc107;
+        }
+
+        .task-item.normal {
+            border-left-color: #667eea;
+        }
+
+        .priority-label {
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .priority-label.urgent {
+            background: #ff3333;
+            color: white;
+        }
+
+        .priority-label.important {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .priority-label.normal {
+            background: #e0e0e0;
+            color: #333;
+        }
+
         .task-text {
             flex: 1;
             font-size: 16px;
@@ -150,6 +201,97 @@
             background: #f0f4ff;
             border-radius: 8px;
         }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-content input,
+        .modal-content select {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .modal-content input:focus,
+        .modal-content select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #saveEditBtn {
+            background: #667eea;
+            color: white;
+        }
+
+        #saveEditBtn:hover {
+            background: #5568d3;
+        }
+
+        #cancelEditBtn {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        #cancelEditBtn:hover {
+            background: #d0d0d0;
+        }
     </style>
 </head>
 <body>
@@ -167,12 +309,35 @@
                 placeholder="新しいタスクを入力してください..."
                 autocomplete="off"
             >
+            <select id="prioritySelect">
+                <option value="normal">通常</option>
+                <option value="important">重要</option>
+                <option value="urgent">緊急</option>
+            </select>
             <button id="addBtn">追加</button>
         </div>
 
         <ul id="taskList"></ul>
         <div class="empty-message" id="emptyMessage">
             タスクを追加してください！
+        </div>
+
+        <!-- 編集モーダル -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>タスク編集</h2>
+                <input type="text" id="editTaskInput" placeholder="タスク名">
+                <select id="editPrioritySelect">
+                    <option value="normal">通常</option>
+                    <option value="important">重要</option>
+                    <option value="urgent">緊急</option>
+                </select>
+                <div class="modal-buttons">
+                    <button id="saveEditBtn">保存</button>
+                    <button id="cancelEditBtn">キャンセル</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -182,11 +347,20 @@
 
         // DOM要素
         const taskInput = document.getElementById('taskInput');
+        const prioritySelect = document.getElementById('prioritySelect');
         const addBtn = document.getElementById('addBtn');
         const taskList = document.getElementById('taskList');
         const emptyMessage = document.getElementById('emptyMessage');
         const completedCount = document.getElementById('completedCount');
         const totalCount = document.getElementById('totalCount');
+        const editModal = document.getElementById('editModal');
+        const editTaskInput = document.getElementById('editTaskInput');
+        const editPrioritySelect = document.getElementById('editPrioritySelect');
+        const saveEditBtn = document.getElementById('saveEditBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const closeBtn = document.querySelector('.close');
+
+        let editingTaskId = null;
 
         // タスク追加関数
         function addTask() {
@@ -201,7 +375,8 @@
             const task = {
                 id: Date.now(),
                 text: taskText,
-                completed: false
+                completed: false,
+                priority: prioritySelect.value
             };
 
             tasks.push(task);
@@ -225,6 +400,45 @@
             }
         }
 
+        // タスク編集開始関数
+        function editTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                editingTaskId = id;
+                editTaskInput.value = task.text;
+                editPrioritySelect.value = task.priority;
+                editModal.style.display = 'block';
+                editTaskInput.focus();
+            }
+        }
+
+        // タスク編集保存関数
+        function saveTaskEdit() {
+            if (editingTaskId === null) return;
+
+            const editedText = editTaskInput.value.trim();
+            if (editedText === '') {
+                alert('タスク名を入力してください');
+                return;
+            }
+
+            const task = tasks.find(t => t.id === editingTaskId);
+            if (task) {
+                task.text = editedText;
+                task.priority = editPrioritySelect.value;
+                closeEditModal();
+                renderTasks();
+            }
+        }
+
+        // モーダル閉じる関数
+        function closeEditModal() {
+            editModal.style.display = 'none';
+            editingTaskId = null;
+            editTaskInput.value = '';
+            editPrioritySelect.value = 'normal';
+        }
+
         // タスク表示関数
         function renderTasks() {
             // 統計情報を更新
@@ -243,22 +457,37 @@
 
             tasks.forEach(task => {
                 const li = document.createElement('li');
-                li.className = `task-item ${task.completed ? 'completed' : ''}`;
+                li.className = `task-item ${task.completed ? 'completed' : ''} ${task.priority}`;
 
                 const span = document.createElement('span');
                 span.className = 'task-text';
                 span.textContent = task.text;
+
+                const priorityLabel = document.createElement('span');
+                priorityLabel.className = `priority-label ${task.priority}`;
+                const priorityText = {
+                    urgent: '緊急',
+                    important: '重要',
+                    normal: '通常'
+                };
+                priorityLabel.textContent = priorityText[task.priority];
 
                 const button = document.createElement('button');
                 button.className = 'delete-btn';
                 button.textContent = '削除';
 
                 li.appendChild(span);
+                li.appendChild(priorityLabel);
                 li.appendChild(button);
 
                 // タスクテキストをクリックで完了トグル
                 span.addEventListener('click', () => {
                     toggleTask(task.id);
+                });
+
+                // ダブルクリックで編集
+                li.addEventListener('dblclick', () => {
+                    editTask(task.id);
                 });
 
                 // 削除ボタンをクリックで削除
@@ -287,6 +516,25 @@
         taskInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 addTask();
+            }
+        });
+
+        // モーダルのイベントリスナー
+        closeBtn.addEventListener('click', closeEditModal);
+        cancelEditBtn.addEventListener('click', closeEditModal);
+        saveEditBtn.addEventListener('click', saveTaskEdit);
+
+        // モーダル外をクリックで閉じる
+        window.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                closeEditModal();
+            }
+        });
+
+        // Escapeキーでモーダルを閉じる
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && editModal.style.display === 'block') {
+                closeEditModal();
             }
         });
 
