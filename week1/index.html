@@ -11,9 +11,15 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --main-color: var(--main-color);
+            --main-color-dark: var(--main-color-dark);
+            --main-gradient-end: var(--main-gradient-end);
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--main-color) 0%, var(--main-gradient-end) 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -54,7 +60,7 @@
 
         #taskInput:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--main-color);
         }
 
         #prioritySelect {
@@ -69,12 +75,12 @@
 
         #prioritySelect:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--main-color);
         }
 
         #addBtn {
             padding: 12px 30px;
-            background: #667eea;
+            background: var(--main-color);
             color: white;
             border: none;
             border-radius: 8px;
@@ -85,7 +91,7 @@
         }
 
         #addBtn:hover {
-            background: #5568d3;
+            background: var(--main-color-dark);
         }
 
         #addBtn:active {
@@ -103,7 +109,7 @@
             padding: 15px;
             margin-bottom: 12px;
             border-radius: 8px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid var(--main-color);
             transition: all 0.3s;
         }
 
@@ -131,7 +137,7 @@
         }
 
         .task-item.normal {
-            border-left-color: #667eea;
+            border-left-color: var(--main-color);
         }
 
         .priority-label {
@@ -193,13 +199,40 @@
 
         .stats {
             text-align: center;
-            color: #667eea;
+            color: var(--main-color);
             font-weight: 600;
             font-size: 16px;
             margin-bottom: 20px;
             padding: 10px;
             background: #f0f4ff;
             border-radius: 8px;
+        }
+
+        .color-picker {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .color-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, var(--theme-color) 0%, var(--theme-end) 100%);
+        }
+
+        .color-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .color-btn.active {
+            border-color: #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
         }
 
         .modal {
@@ -255,7 +288,7 @@
         .modal-content input:focus,
         .modal-content select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--main-color);
         }
 
         .modal-buttons {
@@ -276,12 +309,12 @@
         }
 
         #saveEditBtn {
-            background: #667eea;
+            background: var(--main-color);
             color: white;
         }
 
         #saveEditBtn:hover {
-            background: #5568d3;
+            background: var(--main-color-dark);
         }
 
         #cancelEditBtn {
@@ -300,6 +333,15 @@
 
         <div class="stats" id="stats">
             <span id="completedCount">0</span> / <span id="totalCount">0</span> 件完了
+        </div>
+
+        <!-- カラー選択ボタン -->
+        <div class="color-picker">
+            <button class="color-btn active" data-color="blue" style="--theme-color: #667eea; --theme-dark: #5568d3; --theme-end: #764ba2;"></button>
+            <button class="color-btn" data-color="purple" style="--theme-color: #8b5cf6; --theme-dark: #7c3aed; --theme-end: #a855f7;"></button>
+            <button class="color-btn" data-color="pink" style="--theme-color: #ec4899; --theme-dark: #be185d; --theme-end: #f472b6;"></button>
+            <button class="color-btn" data-color="green" style="--theme-color: #10b981; --theme-dark: #059669; --theme-end: #34d399;"></button>
+            <button class="color-btn" data-color="orange" style="--theme-color: #f59e0b; --theme-dark: #d97706; --theme-end: #fbbf24;"></button>
         </div>
 
         <div class="input-group">
@@ -359,6 +401,8 @@
         const saveEditBtn = document.getElementById('saveEditBtn');
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         const closeBtn = document.querySelector('.close');
+        const colorBtns = document.querySelectorAll('.color-btn');
+        const root = document.documentElement;
 
         let editingTaskId = null;
 
@@ -537,6 +581,40 @@
                 closeEditModal();
             }
         });
+
+        // カラー変更関数
+        function changeColor(colorName) {
+            const colorMap = {
+                blue: { main: '#667eea', dark: '#5568d3', end: '#764ba2' },
+                purple: { main: '#8b5cf6', dark: '#7c3aed', end: '#a855f7' },
+                pink: { main: '#ec4899', dark: '#be185d', end: '#f472b6' },
+                green: { main: '#10b981', dark: '#059669', end: '#34d399' },
+                orange: { main: '#f59e0b', dark: '#d97706', end: '#fbbf24' }
+            };
+
+            const colors = colorMap[colorName];
+            if (colors) {
+                root.style.setProperty('--main-color', colors.main);
+                root.style.setProperty('--main-color-dark', colors.dark);
+                root.style.setProperty('--main-gradient-end', colors.end);
+                localStorage.setItem('selectedColor', colorName);
+
+                // アクティブボタンの更新
+                colorBtns.forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[data-color="${colorName}"]`).classList.add('active');
+            }
+        }
+
+        // カラーボタンのイベントリスナー
+        colorBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                changeColor(btn.dataset.color);
+            });
+        });
+
+        // ページロード時に保存されたカラーを復元
+        const savedColor = localStorage.getItem('selectedColor') || 'blue';
+        changeColor(savedColor);
 
         // 初期表示
         renderTasks();
