@@ -370,6 +370,50 @@
             outline: none;
             border-color: var(--main-color);
         }
+
+        .date-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: -15px;
+            margin-bottom: 20px;
+        }
+
+        .date-row label {
+            font-size: 14px;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        #deadlineInput {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        #deadlineInput:focus {
+            outline: none;
+            border-color: var(--main-color);
+        }
+
+        .task-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .deadline-label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .deadline-label.overdue {
+            color: #ff3333;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -410,6 +454,10 @@
             </select>
             <button id="addBtn">追加</button>
         </div>
+        <div class="date-row">
+            <label for="deadlineInput">締め切り日</label>
+            <input type="date" id="deadlineInput">
+        </div>
 
         <ul id="taskList"></ul>
         <div class="empty-message" id="emptyMessage">
@@ -427,6 +475,7 @@
                     <option value="important">重要</option>
                     <option value="urgent">緊急</option>
                 </select>
+                <input type="date" id="editDeadlineInput">
                 <div class="modal-buttons">
                     <button id="saveEditBtn">保存</button>
                     <button id="cancelEditBtn">キャンセル</button>
@@ -450,6 +499,8 @@
         const editModal = document.getElementById('editModal');
         const editTaskInput = document.getElementById('editTaskInput');
         const editPrioritySelect = document.getElementById('editPrioritySelect');
+        const editDeadlineInput = document.getElementById('editDeadlineInput');
+        const deadlineInput = document.getElementById('deadlineInput');
         const saveEditBtn = document.getElementById('saveEditBtn');
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         const closeBtn = document.querySelector('.close');
@@ -495,12 +546,14 @@
                 id: Date.now(),
                 text: taskText,
                 completed: false,
-                priority: prioritySelect.value
+                priority: prioritySelect.value,
+                deadline: deadlineInput.value
             };
 
             tasks.push(task);
             saveTasks();
             taskInput.value = '';
+            deadlineInput.value = '';
             taskInput.focus();
             renderTasks();
         }
@@ -529,6 +582,7 @@
                 editingTaskId = id;
                 editTaskInput.value = task.text;
                 editPrioritySelect.value = task.priority;
+                editDeadlineInput.value = task.deadline || '';
                 editModal.style.display = 'block';
                 editTaskInput.focus();
             }
@@ -548,6 +602,7 @@
             if (task) {
                 task.text = editedText;
                 task.priority = editPrioritySelect.value;
+                task.deadline = editDeadlineInput.value;
                 saveTasks();
                 closeEditModal();
                 renderTasks();
@@ -560,6 +615,7 @@
             editingTaskId = null;
             editTaskInput.value = '';
             editPrioritySelect.value = 'normal';
+            editDeadlineInput.value = '';
         }
 
         // タスク表示関数
@@ -594,9 +650,21 @@
                 const li = document.createElement('li');
                 li.className = `task-item ${task.completed ? 'completed' : ''} ${task.priority}`;
 
+                const taskMain = document.createElement('div');
+                taskMain.className = 'task-main';
+
                 const span = document.createElement('span');
                 span.className = 'task-text';
                 span.textContent = task.text;
+                taskMain.appendChild(span);
+
+                if (task.deadline) {
+                    const today = new Date().toISOString().slice(0, 10);
+                    const deadlineSpan = document.createElement('span');
+                    deadlineSpan.className = 'deadline-label' + (!task.completed && task.deadline < today ? ' overdue' : '');
+                    deadlineSpan.textContent = '締め切り: ' + task.deadline.replace(/-/g, '/');
+                    taskMain.appendChild(deadlineSpan);
+                }
 
                 const priorityLabel = document.createElement('span');
                 priorityLabel.className = `priority-label ${task.priority}`;
@@ -611,7 +679,7 @@
                 button.className = 'delete-btn';
                 button.textContent = '削除';
 
-                li.appendChild(span);
+                li.appendChild(taskMain);
                 li.appendChild(priorityLabel);
                 li.appendChild(button);
 
