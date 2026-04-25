@@ -140,6 +140,11 @@
             border-left-color: var(--main-color);
         }
 
+        .task-item.overdue {
+            background: #fff0f0;
+            border-left-color: #ff3333;
+        }
+
         .priority-label {
             font-size: 12px;
             font-weight: 600;
@@ -646,9 +651,12 @@
 
             emptyMessage.style.display = 'none';
 
+            const today = new Date().toISOString().slice(0, 10);
+
             filteredTasks.forEach(task => {
+                const isOverdue = !task.completed && task.deadline && task.deadline < today;
                 const li = document.createElement('li');
-                li.className = `task-item ${task.completed ? 'completed' : ''} ${task.priority}`;
+                li.className = `task-item ${task.completed ? 'completed' : ''} ${task.priority}${isOverdue ? ' overdue' : ''}`;
 
                 const taskMain = document.createElement('div');
                 taskMain.className = 'task-main';
@@ -659,9 +667,8 @@
                 taskMain.appendChild(span);
 
                 if (task.deadline) {
-                    const today = new Date().toISOString().slice(0, 10);
                     const deadlineSpan = document.createElement('span');
-                    deadlineSpan.className = 'deadline-label' + (!task.completed && task.deadline < today ? ' overdue' : '');
+                    deadlineSpan.className = 'deadline-label' + (isOverdue ? ' overdue' : '');
                     deadlineSpan.textContent = '締め切り: ' + task.deadline.replace(/-/g, '/');
                     taskMain.appendChild(deadlineSpan);
                 }
