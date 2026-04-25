@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シンプルToDoリスト</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --main-color: var(--main-color);
+            --main-color-dark: var(--main-color-dark);
+            --main-gradient-end: var(--main-gradient-end);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--main-color) 0%, var(--main-gradient-end) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        #taskInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        #taskInput:focus {
+            outline: none;
+            border-color: var(--main-color);
+        }
+
+        #prioritySelect {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        #prioritySelect:focus {
+            outline: none;
+            border-color: var(--main-color);
+        }
+
+        #addBtn {
+            padding: 12px 30px;
+            background: var(--main-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #addBtn:hover {
+            background: var(--main-color-dark);
+        }
+
+        #addBtn:active {
+            transform: scale(0.98);
+        }
+
+        #taskList {
+            list-style: none;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border-left: 4px solid var(--main-color);
+            transition: all 0.3s;
+        }
+
+        .task-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateX(5px);
+        }
+
+        .task-item.completed {
+            background: #e8f5e9;
+            border-left-color: #4caf50;
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .task-item.urgent {
+            border-left-color: #ff3333;
+        }
+
+        .task-item.important {
+            border-left-color: #ffc107;
+        }
+
+        .task-item.normal {
+            border-left-color: var(--main-color);
+        }
+
+        .priority-label {
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .priority-label.urgent {
+            background: #ff3333;
+            color: white;
+        }
+
+        .priority-label.important {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .priority-label.normal {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .task-text {
+            flex: 1;
+            font-size: 16px;
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+            padding: 5px;
+        }
+
+        .delete-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+            margin-left: 10px;
+        }
+
+        .delete-btn:hover {
+            background: #ff5252;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #999;
+            padding: 30px 20px;
+            font-size: 16px;
+        }
+
+        .stats {
+            text-align: center;
+            color: var(--main-color);
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f0f4ff;
+            border-radius: 8px;
+        }
+
+        .color-picker {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .color-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, var(--theme-color) 0%, var(--theme-end) 100%);
+        }
+
+        .color-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .color-btn.active {
+            border-color: #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-content input,
+        .modal-content select {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .modal-content input:focus,
+        .modal-content select:focus {
+            outline: none;
+            border-color: var(--main-color);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #saveEditBtn {
+            background: var(--main-color);
+            color: white;
+        }
+
+        #saveEditBtn:hover {
+            background: var(--main-color-dark);
+        }
+
+        #cancelEditBtn {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        #cancelEditBtn:hover {
+            background: #d0d0d0;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            background: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #666;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--main-color);
+            color: var(--main-color);
+        }
+
+        .filter-btn.active {
+            background: var(--main-color);
+            border-color: var(--main-color);
+            color: white;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: var(--main-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 ToDoリスト</h1>
+
+        <div class="stats" id="stats">
+            <span id="completedCount">0</span> / <span id="totalCount">0</span> 件完了
+        </div>
+
+        <!-- カラー選択ボタン -->
+        <div class="color-picker">
+            <button class="color-btn active" data-color="blue" style="--theme-color: #667eea; --theme-dark: #5568d3; --theme-end: #764ba2;"></button>
+            <button class="color-btn" data-color="purple" style="--theme-color: #8b5cf6; --theme-dark: #7c3aed; --theme-end: #a855f7;"></button>
+            <button class="color-btn" data-color="pink" style="--theme-color: #ec4899; --theme-dark: #be185d; --theme-end: #f472b6;"></button>
+            <button class="color-btn" data-color="green" style="--theme-color: #10b981; --theme-dark: #059669; --theme-end: #34d399;"></button>
+            <button class="color-btn" data-color="orange" style="--theme-color: #f59e0b; --theme-dark: #d97706; --theme-end: #fbbf24;"></button>
+        </div>
+
+        <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all">すべて</button>
+            <button class="filter-btn" data-filter="incomplete">未完了のみ</button>
+            <button class="filter-btn" data-filter="completed">完了済みのみ</button>
+        </div>
+        <input type="text" id="searchInput" placeholder="キーワードで検索...">
+
+        <div class="input-group">
+            <input
+                type="text"
+                id="taskInput"
+                placeholder="新しいタスクを入力してください..."
+                autocomplete="off"
+            >
+            <select id="prioritySelect">
+                <option value="normal">通常</option>
+                <option value="important">重要</option>
+                <option value="urgent">緊急</option>
+            </select>
+            <button id="addBtn">追加</button>
+        </div>
+
+        <ul id="taskList"></ul>
+        <div class="empty-message" id="emptyMessage">
+            タスクを追加してください！
+        </div>
+
+        <!-- 編集モーダル -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>タスク編集</h2>
+                <input type="text" id="editTaskInput" placeholder="タスク名">
+                <select id="editPrioritySelect">
+                    <option value="normal">通常</option>
+                    <option value="important">重要</option>
+                    <option value="urgent">緊急</option>
+                </select>
+                <div class="modal-buttons">
+                    <button id="saveEditBtn">保存</button>
+                    <button id="cancelEditBtn">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // タスク配列
+        let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+
+        // DOM要素
+        const taskInput = document.getElementById('taskInput');
+        const prioritySelect = document.getElementById('prioritySelect');
+        const addBtn = document.getElementById('addBtn');
+        const taskList = document.getElementById('taskList');
+        const emptyMessage = document.getElementById('emptyMessage');
+        const completedCount = document.getElementById('completedCount');
+        const totalCount = document.getElementById('totalCount');
+        const editModal = document.getElementById('editModal');
+        const editTaskInput = document.getElementById('editTaskInput');
+        const editPrioritySelect = document.getElementById('editPrioritySelect');
+        const saveEditBtn = document.getElementById('saveEditBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const closeBtn = document.querySelector('.close');
+        const colorBtns = document.querySelectorAll('.color-btn');
+        const root = document.documentElement;
+
+        let editingTaskId = null;
+        let currentFilter = 'all';
+        let searchKeyword = '';
+
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const searchInput = document.getElementById('searchInput');
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentFilter = btn.dataset.filter;
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderTasks();
+            });
+        });
+
+        searchInput.addEventListener('input', () => {
+            searchKeyword = searchInput.value.trim();
+            renderTasks();
+        });
+
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // タスク追加関数
+        function addTask() {
+            const taskText = taskInput.value.trim();
+
+            if (taskText === '') {
+                alert('タスクを入力してください');
+                return;
+            }
+
+            // タスクオブジェクトを作成
+            const task = {
+                id: Date.now(),
+                text: taskText,
+                completed: false,
+                priority: prioritySelect.value
+            };
+
+            tasks.push(task);
+            saveTasks();
+            taskInput.value = '';
+            taskInput.focus();
+            renderTasks();
+        }
+
+        // タスク削除関数
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            saveTasks();
+            renderTasks();
+        }
+
+        // タスク完了トグル関数
+        function toggleTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveTasks();
+                renderTasks();
+            }
+        }
+
+        // タスク編集開始関数
+        function editTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                editingTaskId = id;
+                editTaskInput.value = task.text;
+                editPrioritySelect.value = task.priority;
+                editModal.style.display = 'block';
+                editTaskInput.focus();
+            }
+        }
+
+        // タスク編集保存関数
+        function saveTaskEdit() {
+            if (editingTaskId === null) return;
+
+            const editedText = editTaskInput.value.trim();
+            if (editedText === '') {
+                alert('タスク名を入力してください');
+                return;
+            }
+
+            const task = tasks.find(t => t.id === editingTaskId);
+            if (task) {
+                task.text = editedText;
+                task.priority = editPrioritySelect.value;
+                saveTasks();
+                closeEditModal();
+                renderTasks();
+            }
+        }
+
+        // モーダル閉じる関数
+        function closeEditModal() {
+            editModal.style.display = 'none';
+            editingTaskId = null;
+            editTaskInput.value = '';
+            editPrioritySelect.value = 'normal';
+        }
+
+        // タスク表示関数
+        function renderTasks() {
+            // 統計情報を更新（フィルター前の全件数で計算）
+            const completed = tasks.filter(task => task.completed).length;
+            completedCount.textContent = completed;
+            totalCount.textContent = tasks.length;
+
+            taskList.replaceChildren();
+
+            const filterMap = {
+                all: () => true,
+                incomplete: task => !task.completed,
+                completed: task => task.completed
+            };
+            const keyword = searchKeyword.toLowerCase();
+            const filteredTasks = tasks.filter(task =>
+                (filterMap[currentFilter] || (() => true))(task) &&
+                task.text.toLowerCase().includes(keyword)
+            );
+
+            if (filteredTasks.length === 0) {
+                emptyMessage.style.display = 'block';
+                emptyMessage.textContent = tasks.length === 0 ? 'タスクを追加してください！' : '該当するタスクがありません';
+                return;
+            }
+
+            emptyMessage.style.display = 'none';
+
+            filteredTasks.forEach(task => {
+                const li = document.createElement('li');
+                li.className = `task-item ${task.completed ? 'completed' : ''} ${task.priority}`;
+
+                const span = document.createElement('span');
+                span.className = 'task-text';
+                span.textContent = task.text;
+
+                const priorityLabel = document.createElement('span');
+                priorityLabel.className = `priority-label ${task.priority}`;
+                const priorityText = {
+                    urgent: '緊急',
+                    important: '重要',
+                    normal: '通常'
+                };
+                priorityLabel.textContent = priorityText[task.priority];
+
+                const button = document.createElement('button');
+                button.className = 'delete-btn';
+                button.textContent = '削除';
+
+                li.appendChild(span);
+                li.appendChild(priorityLabel);
+                li.appendChild(button);
+
+                // タスクテキストをクリックで完了トグル
+                span.addEventListener('click', () => {
+                    toggleTask(task.id);
+                });
+
+                // ダブルクリックで編集
+                li.addEventListener('dblclick', () => {
+                    editTask(task.id);
+                });
+
+                // 削除ボタンをクリックで削除
+                button.addEventListener('click', () => {
+                    deleteTask(task.id);
+                });
+
+                taskList.appendChild(li);
+            });
+        }
+
+        // HTMLエスケープ関数（XSS対策）
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // イベントリスナー設定
+        addBtn.addEventListener('click', addTask);
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        // モーダルのイベントリスナー
+        closeBtn.addEventListener('click', closeEditModal);
+        cancelEditBtn.addEventListener('click', closeEditModal);
+        saveEditBtn.addEventListener('click', saveTaskEdit);
+
+        // モーダル外をクリックで閉じる
+        window.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                closeEditModal();
+            }
+        });
+
+        // Escapeキーでモーダルを閉じる
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && editModal.style.display === 'block') {
+                closeEditModal();
+            }
+        });
+
+        // カラー変更関数
+        function changeColor(colorName) {
+            const colorMap = {
+                blue: { main: '#667eea', dark: '#5568d3', end: '#764ba2' },
+                purple: { main: '#8b5cf6', dark: '#7c3aed', end: '#a855f7' },
+                pink: { main: '#ec4899', dark: '#be185d', end: '#f472b6' },
+                green: { main: '#10b981', dark: '#059669', end: '#34d399' },
+                orange: { main: '#f59e0b', dark: '#d97706', end: '#fbbf24' }
+            };
+
+            const colors = colorMap[colorName];
+            if (colors) {
+                root.style.setProperty('--main-color', colors.main);
+                root.style.setProperty('--main-color-dark', colors.dark);
+                root.style.setProperty('--main-gradient-end', colors.end);
+                localStorage.setItem('selectedColor', colorName);
+
+                // アクティブボタンの更新
+                colorBtns.forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[data-color="${colorName}"]`).classList.add('active');
+            }
+        }
+
+        // カラーボタンのイベントリスナー
+        colorBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                changeColor(btn.dataset.color);
+            });
+        });
+
+        // ページロード時に保存されたカラーを復元
+        const savedColor = localStorage.getItem('selectedColor') || 'blue';
+        changeColor(savedColor);
+
+        // 初期表示
+        renderTasks();
+    </script>
+</body>
+</html>
